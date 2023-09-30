@@ -1,48 +1,78 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createApi } from 'unsplash-js'
-import { type ApiResponse } from 'unsplash-js/dist/helpers/response'
-import { type Photos } from 'unsplash-js/dist/methods/search/types/response'
-import Image from './Image'
+import InfiniteScroll from 'react-infinite-scroll-component'
+import Card from './Card'
 import Masonry from '@mui/lab/Masonry'
+import { type Basic } from 'unsplash-js/dist/methods/photos/types'
+import { usePhotoStore } from '../store/photoStore'
 
 const api = createApi({
   // Don't forget to set your access token here!
   // See https://unsplash.com/developers
-  accessKey: 'i7nCOjx2a0xRyXA8fMZ8ruJpgrfms0Smw32JSdfoHrY'
+  accessKey: import.meta.env.VITE_ACCESSKEY
 })
 
 export default function ImageContent() {
-  const [data, setData] = useState<ApiResponse<Photos> | null>(null)
+  const [data, setData] = useState<Basic[] | undefined | null>(null)
+  const page = useRef(1)
+  const [hasMore, setHasMore] = useState(true)
+  const value = usePhotoStore((state) => state.value)
 
-  useEffect(() => {
+  const fetchData = () => {
+    if (data == null) return
+    if (page.current > 2) {
+      setHasMore(false)
+      return
+    }
+    page.current += 1
     api.search
-      .getPhotos({ query: 'cat' })
+      .getPhotos({ query: value, perPage: 20, page: page.current })
       .then((result) => {
-        setData(result)
+        setData(data.concat(result.response?.results))
       })
       .catch(() => {
         console.log('something went wrong!')
       })
-  }, [])
+  }
 
-  if (data === null) {
-    return <div className="text-2xl text-center mx-auto my-5">Loading...</div>
-  } else if (data.errors != null && data.errors !== undefined) {
+  useEffect(() => {
+    page.current = 1
+    setHasMore(true)
+    api.search
+      .getPhotos({ query: value, perPage: 20, page: page.current })
+      .then((result) => {
+        setData(result.response?.results)
+      })
+      .catch(() => {
+        console.log('something went wrong!')
+      })
+  }, [value])
+
+  if (data == null) {
     return (
-      <div>
-        <div>{data.errors[0]}</div>
-        <div>PS: Make sure to set your access token!</div>
+      <div className="text-2xl text-center mx-auto my-5">
+        Initial Loading...
       </div>
     )
   }
-
   return (
     <div className="max-w-screen-2xl mx-auto">
-      <Masonry columns={5} spacing={3}>
-        {data.response.results.map((photo) => (
-          <Image key={photo.id} photo={photo} />
-        ))}
-      </Masonry>
+      <InfiniteScroll
+        next={fetchData}
+        dataLength={data?.length ?? 0}
+        hasMore={hasMore}
+        loader={<h4>Loading...</h4>}
+        style={{ overflow: 'none' }}
+      >
+        <Masonry
+          columns={{ xs: 2, sm: 3, md: 5 }}
+          spacing={{ xs: 1, sm: 2, md: 3 }}
+        >
+          {data?.map((photo) => (
+            <Card key={photo.id} photo={photo} />
+          ))}
+        </Masonry>
+      </InfiniteScroll>
     </div>
   )
 }
