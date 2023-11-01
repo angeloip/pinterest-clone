@@ -3,7 +3,7 @@ import { DotsIcon, UploadIcon } from './Icons'
 
 export default function Card({ photo }: { photo: Basic }) {
   return (
-    <div>
+    <div className="break-inside-avoid">
       <figure className="relative group">
         <img
           src={photo.urls.small}

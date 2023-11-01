@@ -2,7 +2,6 @@ import { useEffect, useState, useRef } from 'react'
 import { createApi } from 'unsplash-js'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import Card from './Card'
-import Masonry from '@mui/lab/Masonry'
 import { type Basic } from 'unsplash-js/dist/methods/photos/types'
 import { usePhotoStore } from '../store/photoStore'
 
@@ -55,6 +54,8 @@ export default function ImageContent() {
       </div>
     )
   }
+
+  console.log(data)
   return (
     <div className="max-w-screen-2xl mx-auto">
       <InfiniteScroll
@@ -64,14 +65,11 @@ export default function ImageContent() {
         loader={<h4>Loading...</h4>}
         style={{ overflow: 'none' }}
       >
-        <Masonry
-          columns={{ xs: 2, sm: 3, md: 5 }}
-          spacing={{ xs: 1, sm: 2, md: 3 }}
-        >
+        <section className="columns-2 sm:columns-3 md:columns-4 xl:columns-5 gap-3 md:gap-5 mx-auto space-y-3 pb-10 px-4">
           {data?.map((photo) => (
             <Card key={photo.id} photo={photo} />
           ))}
-        </Masonry>
+        </section>
       </InfiniteScroll>
     </div>
   )
